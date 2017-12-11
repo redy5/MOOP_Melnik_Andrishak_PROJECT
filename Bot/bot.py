@@ -10,10 +10,11 @@ bot = telebot.TeleBot(tkn.token)
 
 @bot.message_handler(content_types=['text'])
 def unknown_msg(msg):
-    response = requests.get(config.server, msg.text)
-    bot.send_message(msg.chat.id, "response: " + response.text)
-    print(msg.chat.username + ': ' + msg.text)
-    print("response: " + response.text)
+    if msg.chat.id in config.users:
+        response = requests.get(config.server, msg.text)
+        bot.send_message(msg.chat.id, "response: " + response.text)
+        print(msg.chat.username + ': ' + msg.text)
+        print("response: " + response.text + '\n')
 
 
 if __name__ == '__main__':

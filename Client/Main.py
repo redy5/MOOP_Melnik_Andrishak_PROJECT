@@ -6,7 +6,7 @@ import urllib.request
 import urllib.error
 import requests
 import config
-
+import datetime
 from PyQt5.QtCore import Qt
 
 
@@ -14,8 +14,21 @@ def server_on():
     try:
         urllib.request.urlopen(config.server, timeout=1)
         return True
-    except urllib.error.URLError as err:
+    except urllib.error.URLError:
         return False
+
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def to_date(a):
+    a = a[:len(a)-3]
+    return datetime.datetime.fromtimestamp(int(a)).strftime('%Y-%m-%d %H:%M:%S')
 
 
 class User(object):
@@ -212,28 +225,34 @@ class Window3(Window):
         self.lbl6.setFont(QFont('Impact', 50))
 
         self.btn1 = QPushButton('Add', self)
-        self.btn1.setFont(QFont('Impact', 50))
+        self.btn1.setFont(QFont('Impact', 40))
         self.btn1.setFixedSize(250, 180)
         self.btn1.clicked.connect(self.btn1Clicked)
 
         self.btn2 = QPushButton('Withdraw', self)
-        self.btn2.setFont(QFont('Impact', 50))
+        self.btn2.setFont(QFont('Impact', 40))
         self.btn2.setFixedSize(250, 180)
         self.btn2.clicked.connect(self.btn2Clicked)
 
         self.btn3 = QPushButton('Block', self)
-        self.btn3.setFont(QFont('Impact', 50))
+        self.btn3.setFont(QFont('Impact', 40))
         self.btn3.setFixedSize(250, 180)
         self.btn3.clicked.connect(self.btn3Clicked)
 
         self.btn4 = QPushButton('Eject', self)
-        self.btn4.setFont(QFont('Impact', 50))
+        self.btn4.setFont(QFont('Impact', 40))
         self.btn4.setFixedSize(250, 180)
         self.btn4.clicked.connect(self.btn4Clicked)
 
         self.btn5 = QPushButton('Change pin', self)
-        self.btn5.setFixedSize(100, 50)
+        self.btn5.setFont(QFont('Impact', 40))
+        self.btn5.setFixedSize(250, 180)
         self.btn5.clicked.connect(self.chPin)
+
+        self.btn6 = QPushButton('Transaction', self)
+        self.btn6.setFont(QFont('Impact', 40))
+        self.btn6.setFixedSize(250, 180)
+        self.btn6.clicked.connect(self.transaction)
 
         if self.connected:
             self.statusBar().showMessage('Connected to server')
@@ -246,18 +265,19 @@ class Window3(Window):
         self.lbl4.setGeometry(320, 120, 500, 100)
         self.lbl5.setGeometry(320, 5, 500, 100)
         self.lbl6.setGeometry(80, 5, 500, 100)
-        self.btn1.move(150, 220)
-        self.btn2.move(150, 400)
-        self.btn3.move(400, 220)
-        self.btn4.move(400, 400)
-        self.btn5.move(700, 0)
+        self.btn1.move(275, 210)
+        self.btn2.move(275, 400)
+        self.btn3.move(535, 210)
+        self.btn4.move(535, 400)
+        self.btn5.move(15, 210)
+        self.btn6.move(15, 400)
 
     def btn1Clicked(self):
         if not server_on():
             QMessageBox.warning(self, 'Message', 'Can\'t connect to server!', QMessageBox.Ok)
         else:
             text, ok = QInputDialog.getText(self, 'Input Dialog', 'Enter value:')
-            if not text.isnumeric():
+            if not is_number(text):
                 QMessageBox.warning(self, 'Message', 'Please, write a number!', QMessageBox.Ok)
             else:
                 if ok:
@@ -270,13 +290,16 @@ class Window3(Window):
             QMessageBox.warning(self, 'Message', 'Can\'t connect to server!', QMessageBox.Ok)
         else:
             text, ok = QInputDialog.getText(self, 'Input Dialog', 'Enter value:')
-            if not text.isnumeric():
+            if not is_number(text):
                 QMessageBox.warning(self, 'Message', 'Please, write a number!', QMessageBox.Ok)
             else:
                 if ok:
-                    requests.get(config.server, config.withdraw.format(User.cc, text))
-                    res = requests.get(config.server, config.p2.format(User.cc, User.pin))
-                    self.lbl4.setText(res.text)
+                    response = requests.get(config.server, config.withdraw.format(User.cc, text))
+                    if response == 'success':
+                        res = requests.get(config.server, config.p2.format(User.cc, User.pin))
+                        self.lbl4.setText(res.text)
+                    else:
+                        QMessageBox.warning(self, 'Message', 'You don\'t have enough money!', QMessageBox.Ok)
 
     def btn3Clicked(self):
         if not server_on():
@@ -340,6 +363,38 @@ class Window3(Window):
                         requests.get(config.server, config.chpin.format(User.cc, old_pin, new_pin))
                         User.pin = new_pin
                         QMessageBox.information(self, 'Message', 'Pin has changed!', QMessageBox.Ok)
+
+    def transaction(self):
+        if not server_on():
+            QMessageBox.warning(self, 'Message', 'Can\'t connect to server!', QMessageBox.Ok)
+        else:
+            recipient, ok = QInputDialog.getText(self, 'Input Dialog', 'Enter recipient\'s credit card number:')
+            if not recipient.isnumeric():
+                QMessageBox.warning(self, 'Message', 'Please, write a number!', QMessageBox.Ok)
+            elif len(recipient) != 16:
+                QMessageBox.warning(self, 'Message', 'Credit card number is a 16 digit number!', QMessageBox.Ok)
+            elif recipient == User.cc:
+                QMessageBox.warning(self, 'Message', 'You can\'t send money to yourself!', QMessageBox.Ok)
+            else:
+                response = requests.get(config.server, config.p1.format(recipient))
+                if response.text == 'false':
+                    QMessageBox.warning(self, 'Message', 'Wrong credit card number!', QMessageBox.Ok)
+                elif response.text == 'blocked':
+                    QMessageBox.critical(self, 'Message', 'This card is blocked!', QMessageBox.Ok)
+                else:
+                    if ok:
+                        amount, okk = QInputDialog.getText(self, 'Input Dialog', 'Enter amount:')
+                        if not is_number(amount):
+                            QMessageBox.warning(self, 'Message', 'Please, write a number!', QMessageBox.Ok)
+                        else:
+                            response = requests.get(config.server, config.transaction.format(User.cc, recipient, amount))
+                            if response.text == 'false':
+                                QMessageBox.warning(self, 'Message', 'You don\'t have enough money!', QMessageBox.Ok)
+                            else:
+                                new_bal = requests.get(config.server, config.p2.format(User.cc, User.pin))
+                                QMessageBox.information(self, 'Message', config.s_t.format(recipient, User.bal, new_bal.text, to_date(response.text)))
+                                User.bal = new_bal.text
+                                self.lbl4.setText(User.bal)
 
 
 if __name__ == '__main__':
