@@ -1,5 +1,5 @@
 # ATM (server, client and bot)
-<h1>About</h1>
+<h2>About</h2>
 
 University project of "Methods of Object Oriented Programming"
 
@@ -11,9 +11,8 @@ External libraries for Python:
 - PyQt5 (https://github.com/baoboa/pyqt5)
 - Telebot (https://github.com/eternnoir/pyTelegramBotAPI)
 
-------------------
 
-<h1>Quick guide for the GUI client</h1>
+<h2>Quick guide for the GUI client</h2>
 <h3>Part 1</h3>
 Enter your credit card number. 
 If you have made some mistakes, dialogue windows will inform you.
