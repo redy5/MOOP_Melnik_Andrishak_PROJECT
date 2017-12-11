@@ -21,4 +21,4 @@ Enter your PIN.
 If you have made some mistakes, dialogue windows will inform you.
 Remember, that you have 3 attempts to enter your PIN, and if you are wrong all 3 times, your card will get blocked.
 <h3>Part 3</h3>
-Here you can add and withdraw money from your card, change pin, block and eject it. If you have made some mistakes, dialogue windows will inform you.
+Here you can add and withdraw money from your card, change pin, make transactions, block and eject it. If you have made some mistakes, dialogue windows will inform you.
