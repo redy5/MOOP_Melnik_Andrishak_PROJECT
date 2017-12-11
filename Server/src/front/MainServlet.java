@@ -1,7 +1,5 @@
 package front;
 
-import db.Database;
-import db.Account;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,6 +8,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.util.Date;
+
+import db.Account;
+import db.Database;
 import http.server.Request;
 import http.server.Response;
 import http.server.servlet.AbstractServlet;
@@ -60,6 +62,9 @@ public class MainServlet extends AbstractServlet {
 			String del = "";
 			String gname = "";
 
+			String from = "";
+			String to = "";
+
 			if (request.getParameter("cc") != null)
 				cc = request.getParameter("cc");
 			if (request.getParameter("bal") != null)
@@ -83,15 +88,31 @@ public class MainServlet extends AbstractServlet {
 			if (request.getParameter("gname") != null)
 				gname = request.getParameter("gname");
 
+			if (request.getParameter("from") != null)
+				from = request.getParameter("from");
+			if (request.getParameter("to") != null)
+				to = request.getParameter("to");
+
 			if (!(log == 0)) {
 				out.print(db);
 				return;
 			}
 
-			if (!gname.equals("")) {
-				if (db.findById(gname) != null) {
-					out.print(db.findById(gname).getName());
+			if (!from.equals("") && !to.equals("") & db.findById(to) != null & db.findById(from) != null) {
+				if (db.findById(from).getBalance() > bal) {
+					db.findById(from).addBalance(-bal);
+					db.findById(to).addBalance(bal);
+					out.print(new Date().getTime());
+					debug();
+					return;
 				} else
+					out.print("false");
+			}
+
+			if (!gname.equals("")) {
+				if (db.findById(gname) != null)
+					out.print(db.findById(gname).getName());
+				else
 					out.print("false");
 			}
 
@@ -105,7 +126,15 @@ public class MainServlet extends AbstractServlet {
 					}
 
 					if (bal != 0.0) {
-						db.findById(cc).addBalance(bal);
+						if (bal < 0) {
+							if (db.findById(cc).getBalance() < -bal)
+								out.print("false");
+							else {
+								db.findById(cc).addBalance(bal);
+								out.print("success");
+							}
+						} else
+							db.findById(cc).addBalance(bal);
 					} else if (!pin.equals("")) {
 						if (db.findById(cc).getPin().equals(pin)) {
 							db.findById(cc).setTries(3);
