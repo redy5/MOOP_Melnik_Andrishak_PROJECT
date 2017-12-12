@@ -28,7 +28,7 @@ def is_number(s):
 
 def to_date(a):
     a = a[:len(a)-3]
-    return datetime.datetime.fromtimestamp(int(a)).strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.datetime.fromtimestamp(int(a)).strftime('%d/%m/%Y %H:%M:%S')
 
 
 class User(object):
@@ -295,7 +295,7 @@ class Window3(Window):
             else:
                 if ok:
                     response = requests.get(config.server, config.withdraw.format(User.cc, text))
-                    if response == 'success':
+                    if response.text == 'success':
                         res = requests.get(config.server, config.p2.format(User.cc, User.pin))
                         self.lbl4.setText(res.text)
                     else:
